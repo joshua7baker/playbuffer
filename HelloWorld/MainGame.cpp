@@ -2,6 +2,10 @@
 #define PLAY_USING_GAMEOBJECT_MANAGER
 #include "Play.h"
 
+//Further features/changes made to the game
+//Added a gun timer which only allow the player to shoot x bullets per y amount of frames
+//Coins get destroyed whe the player restarts the game after losing
+
 int DISPLAY_WIDTH = 1280;
 int DISPLAY_HEIGHT = 720;
 int DISPLAY_SCALE = 1;
@@ -34,12 +38,18 @@ enum GameObjectType
 	TYPE_DESTROYED
 };
 
+int fireRate = 20;
+int gunTimer = 0;
+float projectileSpeed = 0;
+
+
 VOID UpdateAgent8();
 VOID UpdateFan();
 VOID UpdateTools();
 VOID UpdateCoinsAndStars();
 VOID UpdateLasers();
 VOID UpdateDestroyed();
+VOID UpdateGunTimer();
 
 // The entry point for a PlayBuffer program
 void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
@@ -66,6 +76,7 @@ bool MainGameUpdate( float elapsedTime )
 	UpdateCoinsAndStars();
 	UpdateLasers();
 	UpdateDestroyed();
+	UpdateGunTimer();
 	Play::DrawFontText("64px", "ARROW KEYS TO MOVE UP AND DOWN AND SPACE TO FIRE", { DISPLAY_WIDTH / 2, DISPLAY_HEIGHT - 30 }, Play::CENTRE);
 	Play::DrawFontText("132px", "SCORE: " + std::to_string(gameState.score), { DISPLAY_WIDTH / 2, 50 }, Play::CENTRE);
 	Play::PresentDrawingBuffer();
@@ -106,12 +117,13 @@ void HandlePlayerControls()
 			obj_agent8.acceleration = { 0,0 };
 
 		}
-	if (Play::KeyDown(VK_SPACE))
+	if (Play::KeyDown(VK_SPACE) && gunTimer >= fireRate)
 	{
 		Vector2D firePos = obj_agent8.pos + Vector2D(155, -75);
 		int id = Play::CreateGameObject(TYPE_LASER, firePos, 30, "laser");
-		Play::GetGameObject(id).velocity = { 32,0 };
+		Play::GetGameObject(id).velocity = { 32 , 0 };
 		Play::PlayAudio("shoot");
+		gunTimer = 0;
 	}
 
 	Play::UpdateGameObject(obj_agent8);
@@ -256,7 +268,7 @@ void UpdateLasers()
 			{
 				hasCollided = true;
 				obj_tool.type = TYPE_DESTROYED;
-				gameState.score += 100; //Setup a score enum which defines all score types instead of hardcoded variables
+				gameState.score += 100;
 			}
 		}
 
@@ -277,7 +289,7 @@ void UpdateLasers()
 		Play::UpdateGameObject(obj_laser);
 		Play::DrawObject(obj_laser);
 
-		if (!Play::IsVisible || Play::IsLeavingDisplayArea)
+		if (!Play::IsVisible(obj_laser) || hasCollided)
 			Play::DestroyGameObject(id_laser);
 	}
 }
@@ -357,6 +369,11 @@ void UpdateDestroyed()
 		if (!Play::IsVisible(obj_dead) || obj_dead.frame >= 10)
 			Play::DestroyGameObject(id_dead);
 	}
+}
+
+void UpdateGunTimer()
+{
+	gunTimer++;
 }
 
    
