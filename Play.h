@@ -1504,9 +1504,12 @@ struct GameObject
 	int lastFrameUpdated{ -1 };
 
 	// Add your own data members here if you want to
+	int currentHealth{ 0 };
+	bool hasCollided{ false };  //utilized to check if the gameobject has already collided to determine if to damage the player
 	PLAY_ADD_GAMEOBJECT_MEMBERS
 
 	int GetId() { return m_id; }
+
 
 private:
 	// The GameObject's id should never be changed manually so we make it private!
